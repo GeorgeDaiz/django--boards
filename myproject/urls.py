@@ -18,16 +18,10 @@ from django.urls import path, re_path, include
 from boards import views
 from accounts import views as accounts_views
 from django.contrib.auth import views as auth_views
-# from django.contrib import admin
-import xadmin
-xadmin.autodiscover()
-
-from xadmin.plugins import xversion
-xversion.register_models()
+from django.contrib import admin
 
 urlpatterns = [
-    # path('mysite/', admin.site.urls),
-    path('mysite/', xadmin.site.urls),
+    path('mysite/', admin.site.urls),
     path('', views.BoardListView.as_view(), name='home'),
     path('boards/', views.boards, name='boards'),
     path('boards/<int:pk>/', views.TopicListView.as_view(), name='board_topics'),

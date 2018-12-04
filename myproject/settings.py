@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-    'xadmin',
+    # 'xadmin',
     'crispy_forms',
 
     'widget_tweaks',
