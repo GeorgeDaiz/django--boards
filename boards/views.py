@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect, reverse
+from django.shortcuts import render, get_object_or_404, redirect, reverse, HttpResponse
 # from django.http import HttpResponse, Http404
 from boards.models import *
 from boards.forms import *
@@ -8,7 +8,7 @@ from django.views.generic import UpdateView, ListView
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
+from myproject.settings import *
 
 # Create your views here.
 
@@ -20,19 +20,43 @@ class BoardListView(ListView):
 def boards(request):
     return redirect('home')
 
-def board_topics(request, pk):
-    board = get_object_or_404(Board, pk=pk)
-    queryset = board.topics.order_by('-last_updated').annotate(replies=Count('posts') - 1)
-    page = request.GET.get('page', 1)
+class TopicListView(ListView):
+    model = Topic
+    context_object_name = 'topics'
+    template_name = 'boards/topics.html'
+    paginate_by = 20
 
-    paginator = Paginator(queryset, 20)
-    try:
-        topics = paginator.page(page)
-    except PageNotAnInteger:
-        topics = paginator.page(1)
-    except EmptyPage:
-        topics = paginator.page(paginator.num_pages)
-    return render(request, 'boards/topics.html', locals())
+    def get_queryset(self):
+        self.board = get_object_or_404(Board, pk=self.kwargs.get('pk'))
+        queryset = self.board.topics.order_by('-last_updated').annotate(replies=Count('posts') - 1)
+        return queryset
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        kwargs['board'] = self.board
+        return super().get_context_data(**kwargs)
+
+
+class PostListView(ListView):
+    model = Post
+    context_object_name = 'posts'
+    template_name = 'boards/topic_posts.html'
+    paginate_by = 2
+
+    def get_queryset(self):
+        self.topic = get_object_or_404(Topic, board__pk=self.kwargs['pk'], pk=self.kwargs.get('topic_pk'))
+        queryset = self.topic.posts.order_by('created_at')
+        return queryset
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        session_key = 'viewed_topic_{}'.format(self.topic.pk)
+        if not self.request.session.get(session_key, False):
+            self.topic.views += 1
+            self.topic.save()
+            self.request.session[session_key] = True
+
+        kwargs['topic'] = self.topic
+        return super().get_context_data(**kwargs)
+
 
 @login_required
 def new_topic(request, pk):
@@ -77,7 +101,7 @@ def reply_topic(request, pk, topic_pk):
                 page=topic.get_page_count(),
                 id=post.pk,
             )
-            return redirect(topic_url)
+            return redirect(topic_post_url)
 
     else:
         form = PostForm()
@@ -102,24 +126,14 @@ class PostUpdateView(UpdateView):
         post.save()
         return redirect('topic_posts', pk=post.topic.board.pk, topic_pk=post.topic.pk)
 
-class PostListView(ListView):
-    model = Post
-    context_object_name = 'posts'
-    template_name = 'boards/topic_posts.html'
-    paginate_by = 2
 
-    def get_queryset(self):
-        self.topic = get_object_or_404(Topic, board__pk=self.kwargs['pk'], pk=self.kwargs.get('topic_pk'))
-        queryset = self.topic.posts.order_by('created_at')
-        return queryset
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        session_key = 'viewed_topic_{}'.format(self.topic.pk)
-        if not self.request.session.get(session_key, False):
-            self.topic.views += 1
-            self.topic.save()
-            self.request.session[session_key] = True
-
-        kwargs['topic'] = self.topic
-        return super().get_context_data(**kwargs)
-
+def upload_ajax(request):
+    if request.method == 'POST':
+        file_obj = request.FILES.get('file')
+        f = open(os.path.join(BASE_DIR, 'static', 'pic', file_obj.name), 'wb')
+        print(file_obj, type(file_obj))
+        for chunk in file_obj.chunks():
+            f.write(chunk)
+        f.close()
+        print('11111')
+        return HttpResponse('OK')

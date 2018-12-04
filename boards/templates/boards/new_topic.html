@@ -12,6 +12,30 @@
   <form method="post" novalidate>
     {% csrf_token %}
     {% include 'includes/form.html' %}
+    <input type="file" name="file" id="file_upload">
+    <input type="button" value="上传" onclick="FileUpload()">
     <button type="submit" class="btn btn-success">Post</button>
   </form>
 {% endblock %}
+
+<script src="/static/js/jquery-3.2.1.min.js"></script>
+<script>
+    function FileUpload() {
+        var form_data = new FormData();
+        var file_info = $('#fiel_upload')[0].files[0];
+        form_data.append('file', file_info);
+        // if (file_info == undefined)
+            // alert("你没有选择任何文件");
+            // return false
+        $.ajax({
+            url: '/upload_ajax',
+            type: 'POST',
+            data: form_data,
+            processData: false,  // tell jquery not to process the data
+            contentType: false, // tell jquery not to set contentType
+            success: function (callback) {
+                console.log('ok')
+            }
+        })
+    }
+</script>

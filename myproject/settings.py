@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
+    'xadmin',
+    'crispy_forms',
+
     'widget_tweaks',
     'boards',
     'accounts',
@@ -132,3 +135,6 @@ LOGIN_REDIRECT_URL = 'home'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 LOGIN_URL = 'login'
+
+# import os
+# SECRET_KEY = os.environ['SECRET_KEY']

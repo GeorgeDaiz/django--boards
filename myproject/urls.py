@@ -13,17 +13,24 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+
 from django.urls import path, re_path, include
 from boards import views
 from accounts import views as accounts_views
 from django.contrib.auth import views as auth_views
+# from django.contrib import admin
+import xadmin
+xadmin.autodiscover()
+
+from xadmin.plugins import xversion
+xversion.register_models()
 
 urlpatterns = [
-    path('mysite/', admin.site.urls),
+    # path('mysite/', admin.site.urls),
+    path('mysite/', xadmin.site.urls),
     path('', views.BoardListView.as_view(), name='home'),
     path('boards/', views.boards, name='boards'),
-    path('boards/<int:pk>/', views.board_topics, name='board_topics'),
+    path('boards/<int:pk>/', views.TopicListView.as_view(), name='board_topics'),
     path('boards/<int:pk>/new/', views.new_topic, name='new_topic'),
     path('signup/', accounts_views.signup, name='signup'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
